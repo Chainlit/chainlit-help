@@ -226,13 +226,16 @@ async def on_chat_start():
 async def use_discord_history(limit = 10):
     messages = cl.user_session.get("messages", [])
     channel: discord.abc.MessageableChannel = cl.user_session.get("discord_channel")
+
     if channel:
         cl.user_session.get("messages")
-        discord_messages = [message async for message in channel.history(limit=limit, oldest_first=True)]
-        for x in discord_messages[:-1]:
+        discord_messages = [message async for message in channel.history(limit=limit)]
+
+        # Go through last `limit` messages and remove the current message.
+        for x in discord_messages[::-1][:-1]:
             messages.append({
-                "role": "assistant" if x.author == discord_client.user else "user",
-                "content": x.content
+                "role": "assistant" if x.author.name == discord_client.user.name else "user",
+                "content": x.clean_content if x.clean_content else x.channel.name # first message is empty
             })
 
 
