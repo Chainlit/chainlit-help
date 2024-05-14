@@ -1,7 +1,9 @@
 import os
 import json
 import asyncio
+import discord
 import chainlit as cl
+from chainlit.discord.app import client as discord_client
 
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
@@ -204,18 +206,34 @@ async def on_chat_start():
     Send a welcome message and set up the initial user session on chat start.
     """
 
-    cl.user_session.set("messages", prompt.format_messages())
-    cl.user_session.set("settings", prompt.settings)
-    cl.user_session.set("tools", prompt.tools)
+    client_type = cl.user_session.get("client_type")
 
-    if cl.user_session.get("client_type") != "discord":
+    if client_type != "discord":
         await cl.Message(
             content="Welcome, please ask me anything about the Chainlit documentation!",
             disable_feedback=True
         ).send()
 
+    cl.user_session.set("messages", prompt.format_messages())
+    cl.user_session.set("settings", prompt.settings)
+    cl.user_session.set("tools", prompt.tools)
+
+    if client_type == "discord":
         # Discord limits the number of characters to 2000
         prompt.settings["max_tokens"] = 400
+
+
+async def use_discord_history(limit = 10):
+    messages = cl.user_session.get("messages", [])
+    channel: discord.abc.MessageableChannel = cl.user_session.get("discord_channel")
+    if channel:
+        cl.user_session.get("messages")
+        discord_messages = [message async for message in channel.history(limit=limit, oldest_first=True)]
+        for x in discord_messages[:-1]:
+            messages.append({
+                "role": "assistant" if x.author == discord_client.user else "user",
+                "content": x.content
+            })
 
 
 @cl.on_message
@@ -223,6 +241,8 @@ async def main(message: cl.Message):
     """
     Main message handler for incoming user messages.
     """
+    # The user session resets on every Discord message. Add previous chat messages manually.
+    await use_discord_history()
     
     answer_message = cl.Message(content="")
     await answer_message.send()
