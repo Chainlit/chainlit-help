@@ -11,7 +11,7 @@
       "type": "function",
       "function": {
         "name": "get_relevant_documentation_chunks",
-        "description": "Gets the relevant documentation chunks for a given question or query.",
+        "description": "Retrieves great content to answer questions about coding an application with Chainlit and the concepts involved in application development.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -32,7 +32,7 @@
       "type": "function",
       "function": {
         "name": "get_relevant_cookbooks_chunks",
-        "description": "Gets the relevant cookbooks chunks for a given question or query.",
+        "description": "Retrieves great content to answer questions about Chainlit APIs or capabilities and have real-world Python examples of how to use them.",
         "parameters": {
           "type": "object",
           "properties": {
@@ -55,7 +55,7 @@
     "stop": [],
     "model": "gpt-4o",
     "top_p": 1,
-    "max_tokens": 256,
+    "max_tokens": 512,
     "temperature": 0,
     "presence_penalty": 0,
     "frequency_penalty": 0

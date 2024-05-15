@@ -137,7 +137,7 @@ async def run_multiple(tool_calls):
 
         function_response = await function_to_call(
             question=function_args.get("question"),
-            top_k=function_args.get("top_k"),
+            top_k=function_args.get("top_k", 5),
         )
         return {
             "tool_call_id": tool_call.id,
