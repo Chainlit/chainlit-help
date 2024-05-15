@@ -83,7 +83,7 @@ def upload_to_index(index, embedding_set, batch_size=100):
         for j in range(i, min(i + batch_size, total_values)):
             batch.append(
                 {
-                    "id": f"vector_{j}",
+                    "id": f"vector_{embedding_set['id']}_{j}",
                     "values": values[j]["values"],
                     "metadata": {
                         "dataset_id": embedding_set["id"],
