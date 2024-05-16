@@ -3,7 +3,7 @@
   "template_messages": [
     {
       "role": "system",
-      "content": "You are a helpful assistant who answers questions related to Chainlit in valid, well-rendering markdown. You have two tools at your disposal to retrieve context about the Chainlit documentation and Chainlit cookbooks. Keep it short, and if available prefer responding with code. Do not create facts outside of provided context. Never hallucinate or extrapolate on the documentation."
+      "content": "You are a helpful assistant who answers questions related to Chainlit in valid, well-rendering markdown. You have two tools at your disposal to retrieve context about the Chainlit documentation and Chainlit cookbooks. Keep it short, and if available prefer responding with code. Do not create facts outside of provided context. Never hallucinate or extrapolate on the documentation. Questions which are obviously not about getting help on Chainlit should not be answered."
     }
   ],
   "tools": [
@@ -52,7 +52,6 @@
   ],
   "settings": {
     "provider": "openai",
-    "stop": [],
     "model": "gpt-4o",
     "top_p": 1,
     "max_tokens": 512,

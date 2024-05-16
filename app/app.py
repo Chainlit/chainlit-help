@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import asyncio
 import discord
 import chainlit as cl
@@ -100,12 +101,15 @@ async def get_relevant_cookbooks_chunks(question, top_k=5):
     return await get_relevant_chunks(question, "dataset_cookbooks", top_k)
 
 
-async def llm_tool(question):
+async def llm_tool(question, images_content):
     """
     Generate a response from the LLM based on the user's question.
     """
     messages = cl.user_session.get("messages", []) or []
-    messages.append({"role": "user", "content": question})
+    messages.append({
+        "role": "user", 
+        "content": [{"type": "text", "text": question}, *images_content]
+    })
 
     settings = cl.user_session.get("settings", {}) or {}
 
@@ -179,12 +183,12 @@ async def llm_answer(tool_results):
 
 
 @cl.step(name="RAG Agent", type="run")
-async def rag_agent(question):
+async def rag_agent(question, images_content):
     """
     Coordinate the RAG agent flow to generate a response based on the user's question.
     """
     # Step 1 - Call LLM with tool: plan to use tool or give message.
-    message = await llm_tool(question)
+    message = await llm_tool(question, images_content)
 
     # Potentially several calls to retrieve context.
     if not message.tool_calls:
@@ -238,16 +242,37 @@ async def use_discord_history(limit = 10):
                 "content": x.clean_content if x.clean_content else x.channel.name # first message is empty
             })
 
+# Function to encode an image
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
 
 @cl.on_message
 async def main(message: cl.Message):
     """
     Main message handler for incoming user messages.
     """
+    images_content = []
+    if message.elements:
+        images = [file for file in message.elements if "image" in file.mime]
+
+        # Only process the first 3 images
+        images = images[:3]
+
+        images_content = [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{image.mime};base64,{encode_image(image.path)}"
+                },
+            }
+            for image in images
+        ]
     # The user session resets on every Discord message. Add previous chat messages manually.
     await use_discord_history()
     
     answer_message = cl.Message(content="")
     await answer_message.send()
     cl.user_session.set("answer_message", answer_message)
-    await rag_agent(message.content)
+    await rag_agent(message.content, images_content)
