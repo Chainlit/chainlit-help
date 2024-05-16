@@ -32,7 +32,7 @@ def create_dataset(id, path):
 
         # Extract file metadata
         metadata = re.search(
-            r"---\ntitle: (.+?)(?:\ndescription: (.+?))?\n---", file_content, re.DOTALL
+            r"---\n[tT]itle: (.+?)(?:\n[dD]escription: (.+?))?\n---", file_content, re.DOTALL
         )
 
         # Skip if missing no metadata
