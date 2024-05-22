@@ -240,7 +240,7 @@ async def use_discord_history(limit = 10):
         for x in discord_messages[::-1][:-1]:
             messages.append({
                 "role": "assistant" if x.author.name == discord_client.user.name else "user",
-                "content": x.clean_content if x.clean_content else x.channel.name # first message is empty
+                "content": x.clean_content if x.clean_content is not None else x.channel.name # first message is empty
             })
 
 # Function to encode an image
