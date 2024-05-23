@@ -54,7 +54,7 @@
     "provider": "openai",
     "model": "gpt-4o",
     "top_p": 1,
-    "max_tokens": 512,
+    "max_tokens": 1024,
     "temperature": 0,
     "presence_penalty": 0,
     "frequency_penalty": 0

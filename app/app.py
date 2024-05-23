@@ -14,6 +14,9 @@ from literalai import LiteralClient
 
 load_dotenv()
 
+# Discord limits the number of characters to 2000, which amounts to ~400 tokens.
+DISCORD_MAX_TOKENS = 400
+
 client = LiteralClient()
 openai_client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -169,16 +172,30 @@ async def llm_answer(tool_results):
     stream = await openai_client.chat.completions.create(
         messages=messages,
         **settings,
-        stream=True
+        stream=True,
+        stream_options={"include_usage": True},
     )
 
     answer_message: cl.Message = cl.user_session.get("answer_message")
+
+    token_count = 0
     async for part in stream:
-        if token := part.choices[0].delta.content or "":
+        if part.usage:
+            token_count = part.usage.completion_tokens
+        elif token := part.choices[0].delta.content or "":
             await answer_message.stream_token(token)
+        
 
     await answer_message.update()
     messages.append({"role": "assistant", "content": answer_message.content})
+
+    if  cl.user_session.get("client_type") == "discord" and token_count == DISCORD_MAX_TOKENS:
+        redirect_message = cl.Message(
+            content="Looks like you hit Discord's limit of 2000 characters. Please visit https://help.chainlit.io to get longer answers."
+        )
+        await redirect_message.send()
+        messages.append(redirect_message)
+
     return answer_message
 
 
@@ -224,8 +241,8 @@ async def on_chat_start():
     cl.user_session.set("tools", prompt.tools)
 
     if client_type == "discord":
-        # Discord limits the number of characters to 2000
-        prompt.settings["max_tokens"] = 400
+        prompt.settings["max_tokens"] = DISCORD_MAX_TOKENS 
+
 
 
 async def use_discord_history(limit = 10):
