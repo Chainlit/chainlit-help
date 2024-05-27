@@ -189,7 +189,7 @@ async def llm_answer(tool_results):
     await answer_message.update()
     messages.append({"role": "assistant", "content": answer_message.content})
 
-    if  cl.user_session.get("client_type") == "discord" and token_count == DISCORD_MAX_TOKENS:
+    if  cl.user_session.get("client_type") == "discord" and token_count >= DISCORD_MAX_TOKENS:
         redirect_message = cl.Message(
             content="Looks like you hit Discord's limit of 2000 characters. Please visit https://help.chainlit.io to get longer answers."
         )
