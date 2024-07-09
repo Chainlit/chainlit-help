@@ -23,16 +23,24 @@ def create_dataset(id, path):
     for filename in os.listdir(path):
         with open(os.path.join(path, filename), "r") as file:
             file_content = file.read()
- 
+
         if filename.endswith("__init__.py"):
             continue
 
         if not filename.endswith("mdx") and not filename.endswith("md"):
-            values.append({"title": filename, "description": "Cookbook in Python", "content": file_content})
+            values.append(
+                {
+                    "title": filename,
+                    "description": "Cookbook in Python",
+                    "content": file_content,
+                }
+            )
 
         # Extract file metadata
         metadata = re.search(
-            r"---\n[tT]itle: (.+?)(?:\n[dD]escription: (.+?))?\n---", file_content, re.DOTALL
+            r"---\n[tT]itle: (.+?)(?:\n[dD]escription: (.+?))?\n---",
+            file_content,
+            re.DOTALL,
         )
 
         # Skip if missing no metadata
@@ -49,12 +57,14 @@ def create_dataset(id, path):
                 content_parts[i] = content_parts[i].replace("\n", " ")
         content = "".join(content_parts)
 
-        values.append({"title": file_title, "description": file_description, "content": content})
+        values.append(
+            {"title": file_title, "description": file_description, "content": content}
+        )
 
     return {"id": id, "values": values}
 
 
-def create_embedding_set(dataset, model="text-embedding-ada-002"):
+def create_embedding_set(dataset, model="text-embedding-3-small"):
     values = []
 
     for item in dataset["values"]:
@@ -66,12 +76,14 @@ def create_embedding_set(dataset, model="text-embedding-ada-002"):
 
     return {"id": dataset["id"], "values": values}
 
+
 def create_pinecone_index(name, client, spec):
     if name in client.list_indexes().names():
         client.delete_index(name)
 
     client.create_index(name, dimension=1536, metric="cosine", spec=spec)
     return pinecone_client.Index(name)
+
 
 def upload_to_index(index, embedding_set, batch_size=100):
     values = embedding_set["values"]
