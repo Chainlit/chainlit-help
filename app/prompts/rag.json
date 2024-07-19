@@ -52,7 +52,7 @@
   ],
   "settings": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4o-mini",
     "top_p": 1,
     "max_tokens": 1024,
     "temperature": 0,

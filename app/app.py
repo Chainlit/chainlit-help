@@ -64,24 +64,23 @@ async def set_starters():
             label="App Ideation",
             message="What kind of application can I create with Chainlit?",
             icon="/public/idea.svg",
-            ),
-
+        ),
         cl.Starter(
             label="How do authentication work?",
             message="Explain the different options for authenticating users in Chainlit.",
             icon="/public/learn.svg",
-            ),
+        ),
         cl.Starter(
             label="Chainlit hello world",
             message="Write a Chainlit hello world app.",
             icon="/public/terminal.svg",
-            ), 
+        ),
         cl.Starter(
             label="Add a text element",
             message="How to add a text source chunk to a message?",
             icon="/public/write.svg",
-            )
-        ]
+        ),
+    ]
 
 
 @cl.step(name="Embed", type="embedding")
@@ -102,10 +101,10 @@ async def retrieve(embedding, dataset_id, top_k):
     if pinecone_index == None:
         raise Exception("Pinecone index not initialized")
     response = pinecone_index.query(
-        vector=embedding, top_k=top_k, include_metadata=True, 
-        filter={
-            "dataset_id": {"$eq": dataset_id}
-        }
+        vector=embedding,
+        top_k=top_k,
+        include_metadata=True,
+        filter={"dataset_id": {"$eq": dataset_id}},
     )
     return response.to_dict()
 
@@ -136,10 +135,12 @@ async def llm_tool(question, images_content):
     Generate a response from the LLM based on the user's question.
     """
     messages = cl.user_session.get("messages", []) or []
-    messages.append({
-        "role": "user", 
-        "content": [{"type": "text", "text": question}, *images_content]
-    })
+    messages.append(
+        {
+            "role": "user",
+            "content": [{"type": "text", "text": question}, *images_content],
+        }
+    )
 
     settings = cl.user_session.get("settings", {}) or {}
 
@@ -147,7 +148,7 @@ async def llm_tool(question, images_content):
         messages=messages,
         **settings,
         tools=cl.user_session.get("tools"),
-        tool_choice="auto"
+        tool_choice="auto",
     )
 
     response_message = response.choices[0].message
@@ -161,7 +162,7 @@ async def run_multiple(tool_calls):
     """
     available_tools = {
         "get_relevant_documentation_chunks": get_relevant_documentation_chunks,
-        "get_relevant_cookbooks_chunks": get_relevant_cookbooks_chunks
+        "get_relevant_cookbooks_chunks": get_relevant_cookbooks_chunks,
     }
 
     async def run_single(tool_call):
@@ -211,12 +212,14 @@ async def llm_answer(tool_results):
             token_count = part.usage.completion_tokens
         elif token := part.choices[0].delta.content or "":
             await answer_message.stream_token(token)
-        
 
     await answer_message.update()
     messages.append({"role": "assistant", "content": answer_message.content})
 
-    if  cl.user_session.get("client_type") == "discord" and token_count >= DISCORD_MAX_TOKENS:
+    if (
+        cl.user_session.get("client_type") == "discord"
+        and token_count >= DISCORD_MAX_TOKENS
+    ):
         redirect_message = cl.Message(
             content="Looks like you hit Discord's limit of 2000 characters. Please visit https://help.chainlit.io to get longer answers."
         )
@@ -261,11 +264,10 @@ async def on_chat_start():
     cl.user_session.set("tools", prompt.tools)
 
     if client_type == "discord":
-        prompt.settings["max_tokens"] = DISCORD_MAX_TOKENS 
+        prompt.settings["max_tokens"] = DISCORD_MAX_TOKENS
 
 
-
-async def use_discord_history(limit = 10):
+async def use_discord_history(limit=10):
     messages = cl.user_session.get("messages", [])
     channel: discord.abc.MessageableChannel = cl.user_session.get("discord_channel")
 
@@ -275,10 +277,21 @@ async def use_discord_history(limit = 10):
 
         # Go through last `limit` messages and remove the current message.
         for x in discord_messages[::-1][:-1]:
-            messages.append({
-                "role": "assistant" if x.author.name == discord_client.user.name else "user",
-                "content": x.clean_content if x.clean_content is not None else x.channel.name # first message is empty
-            })
+            messages.append(
+                {
+                    "role": (
+                        "assistant"
+                        if x.author.name == discord_client.user.name
+                        else "user"
+                    ),
+                    "content": (
+                        x.clean_content
+                        if x.clean_content is not None
+                        else x.channel.name
+                    ),  # first message is empty
+                }
+            )
+
 
 # Function to encode an image
 def encode_image(image_path):
@@ -309,7 +322,7 @@ async def main(message: cl.Message):
         ]
     # The user session resets on every Discord message. Add previous chat messages manually.
     await use_discord_history()
-    
+
     answer_message = cl.Message(content="")
     cl.user_session.set("answer_message", answer_message)
-    await rag_agent(message.content, images_content)
+    return await rag_agent(message.content, images_content)
